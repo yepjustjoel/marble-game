@@ -1,0 +1,12 @@
+Key attributes of each location:
+Player name
+Color
+Type
+filled or not
+is it an entry point
+dict:
+"name" : player's name
+"type" : 
+"defaultDispChar" : what to display when name = 0
+"dispChar" : what to display when printing
+"ID" : 
