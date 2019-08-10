@@ -29,6 +29,8 @@ class player:
         return self.name
     def getTeam(self):
         return self.team
+    def getColor(self):
+        return self.color
 
     # Card Methods
     def addCard(self,newCard):

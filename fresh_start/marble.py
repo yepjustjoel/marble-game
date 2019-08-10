@@ -1,33 +1,46 @@
+import player
+
+from colorama import Fore
+from colorama import Style
+
 # Marble Class
 class marble:
-    locType = "play"
-    index   = 0
-    color   = "white"
-    full    = False
 
     # Init
-    def __init__(self, locType, index, color, full):
-        self.locType = locType # Should be one of: home, play, base
-        self.index   = index
-        self.color   = color
-        self.full    = full # Boolean
+    def __init__(self, isPlayerMarb, marbOwner=None, marbId=0):
+        self.isPlayerMarb = isPlayerMarb
+        self.marbId = marbId
+        if (self.isPlayerMarb):
+            self.player = marbOwner
 
     # Setters
-    def set_locType(self, new_locType):
-        self.locType = new_locType
-    def set_index(self, new_index):
-        self.index = new_index
-    def set_color(self, new_color):
-        self.color = new_color
-    def set_full(self, new_full):
-        self.full = new_full
+    # def setLocation(self, newSection, newLocation, newType):
+    #     self.currSection = newSection
+    #     self.currLocation = newLocation
+    #     self.currType = newType
 
     # Getters
-    def get_locType(self):
-        return self.locType
-    def get_index(self):
-        return self.index
-    def get_color(self):
-        return self.color
-    def get_full(self):
-        return self.full
+    def getPlayerName(self):
+        return self.player.getName() if (self.isPlayerMarb) else 0
+    def getTeam(self):
+        return self.player.getTeam() if (self.isPlayerMarb) else 0
+    def getColor(self):
+        return self.player.getColor() if (self.isPlayerMarb) else 0
+    def getMarbId(self):
+        return self.marbId
+    def getDispChar(self):
+        color = self.getColor()
+        empty = '\u25cb'
+        full = '\u25cf'
+        switcher = {
+            'black' : f'{Fore.BLACK}{full}{Style.RESET_ALL}',
+            'blue' : f'{Fore.BLUE}{full}{Style.RESET_ALL}',
+            'cyan' : f'{Fore.CYAN}{full}{Style.RESET_ALL}',
+            'green' : f'{Fore.GREEN}{full}{Style.RESET_ALL}',
+            'magenta' : f'{Fore.MAGENTA}{full}{Style.RESET_ALL}',
+            'red' : f'{Fore.RED}{full}{Style.RESET_ALL}',
+            'white' : f'{Fore.WHITE}{full}{Style.RESET_ALL}',
+            'yellow' : f'{Fore.YELLOW}{full}{Style.RESET_ALL}'
+        }
+        return switcher.get(color,f'{empty}')
+
