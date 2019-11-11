@@ -31,26 +31,10 @@ class game:
         self.playerList = sortedPlayerList
         self.board = board.board(self.playerList)
         self.board.printBoard()
-        # Prepare the game board
-        self.playLocs = []
-        self.baseLocs = {}
-        self.homeLocs = {}
-        for eachPlayer in self.playerList:
-            name = eachPlayer.getName()
-            self.baseLocs[name] = []
-            for i in range(4):
-                self.baseLocs[name].append(marble.marble(True,eachPlayer,i))
-            self.homeLocs[name] = []
-            for i in range(4):
-                self.homeLocs[name].append(marble.marble(False))
-            for i in range(18):
-                self.playLocs.append(marble.marble(False))
-
 
     # Setters
     def nextTurn(self):
         self.turn = self.turn+1 if self.turn<len(self.playerList)-1 else 0
-
 
     # Getters
     def getAllPlayerNames(self):
@@ -76,34 +60,31 @@ class game:
         for player in self.playerList:
             for i in range(5):
                 player.addCard(self.deck.popCard())
-    def printHands(self):
-        for player in self.playerList:
-            print(player.getName()+"'s hand is:")
-            player.printHand()
+    def printHand(self,player):
+        print(player.getName()+"'s hand is:")
+        player.printHand()
 
-    # Marble Methods
-    def getMarbleLocation(self, player, idx):
-        for loc in self.playLocs:
-            if (loc.getMarbId()==idx) & (loc.getPlayerName()==player.getName()):
-                return 0
-    # def moveMarble(self, loc1, loc2):
-        
-    # Board Display Methods
-    def printBoard(self):
-        print("Play Board")
-        boardText=""
-        for loc in self.playLocs:
-            boardText+=loc.getDispChar()
-        print(boardText)
-        for player in self.playerList:
-            name = player.getName()
-            baseStr = ""
-            homeStr = ""
-            for loc in self.baseLocs[name]:
-                baseStr+=loc.getDispChar()
-            for loc in self.homeLocs[name]:
-                homeStr+=loc.getDispChar()
-            print(name + "'s home: " + homeStr)
-            print(name + "'s base: " + baseStr)
+    # Gameplay functions
+    def playGame(self):
+        while (True):
+            self.dealHands()
+            # while (True):
+            for i in range(len(self.playerList)*self.getCurrentPlayer().getHandLen()):
+                self.printCurrentPlayer()
+                currentPlayer = self.getCurrentPlayer()
+                self.printHand(currentPlayer)
+                # Prompt for card to play
+                canPlay = True if (input("Can you play? (y/n) ")=="y") else False
+                if (canPlay):
+                    cardIdx = int(input("Enter card index: "))
+                    marbIdx = int(input("Enter marb index: "))
+                    # Play card
+                    self.board.playCard(currentPlayer.getName(),marbIdx,currentPlayer.getCard(cardIdx).getValue())
+                else:
+                    currentPlayer.clearHand()
+                # Show board
+                self.board.printBoard()
+                # Next player
+                self.nextTurn()
 
-            
+

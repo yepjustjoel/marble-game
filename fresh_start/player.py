@@ -31,10 +31,16 @@ class player:
         return self.team
     def getColor(self):
         return self.color
+    def getHandLen(self):
+        return len(self.hand)
 
     # Card Methods
     def addCard(self,newCard):
         self.hand.append(newCard)
     def printHand(self):
         for myCard in self.hand:
-            print(myCard.getValue() + " of " + myCard.getSuit())
+            print(str(self.hand.index(myCard)) + ": " + myCard.getValue() + " of " + myCard.getSuit())
+    def getCard(self,cardIdx):
+        return self.hand.pop(cardIdx)
+    def clearHand(self):
+        self.hand = []
