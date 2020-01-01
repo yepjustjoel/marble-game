@@ -107,6 +107,7 @@ class board:
     def moveMarbByValue(self,name,id,value):
         [type,sectionName,idx] = self.getMarb(name,id)
         [endType,endSectionName,endIdx] = self.calcNewLoc(name,id,value)
+        self.sendToBase(endSectionName,endIdx)
         self.moveMarb(type,sectionName,idx,endType,endSectionName,endIdx)
     def playCard(self,name,id,card):
         if card in ["2","3","5","6","8","9","10"]:
