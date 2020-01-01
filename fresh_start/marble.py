@@ -13,12 +13,6 @@ class marble:
         if (self.isPlayerMarb):
             self.player = marbOwner
 
-    # Setters
-    # def setLocation(self, newSection, newLocation, newType):
-    #     self.currSection = newSection
-    #     self.currLocation = newLocation
-    #     self.currType = newType
-
     # Getters
     def getPlayerName(self):
         return self.player.getName() if (self.isPlayerMarb) else 0

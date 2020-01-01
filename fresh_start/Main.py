@@ -2,8 +2,6 @@ import game
 import location
 import marble
 import player
-import section
-import team
 # Possible colors are:
 # black, blue, cyan, green, magenta, red, white, yellow
 playersDict = {"Andy":["red",1],"Betty":["blue",1],"Charlie":["green",2],"Dani":["yellow",2],"Envy":["magenta",1],"Fairy":["cyan",2]}
