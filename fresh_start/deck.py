@@ -1,26 +1,21 @@
-import random
-import card
+import collections
+
+# Set up the card named tuple
+Card = collections.namedtuple('Card',['rank','suit'])
 
 # Deck Class
-class deck:
+class Deck:
+    ranks = [str(n) for n in range(2,11)]+list('JQKA')
+    suits = 'hearts clubs spades diamonds'.split()
 
     # Init
     def __init__(self):
-        self.resetDeck()
+        self._cards = [Card(rank, suit) for suit in self.suits
+                                        for rank in self.ranks]
 
-    # Methods
-    def shuffleDeck(self):
-        random.shuffle(self.cardDeck)
-    def resetDeck(self):
-        suits = ["hearts","clubs","spades","diamonds"]
-        cardValues = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"]
-        self.cardDeck = []
-        for suit in suits:
-            for val in cardValues:
-                self.cardDeck.append(card.card(suit,val))
-                self.cardDeck.append(card.card(suit,val))
-        self.shuffleDeck()
-    def getNumRemainingCards(self):
-        return len(self.cardDeck)
-    def popCard(self):
-        return self.cardDeck.pop()
+    def __len__(self):
+        return len(self._cards)
+    def __getitem__(self, position):
+        return self._cards[position]
+    def __setitem__(self, position, card):
+        self._cards[position] = card

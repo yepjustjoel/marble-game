@@ -1,14 +1,11 @@
 import game
-import location
-import marble
 import player
 # Possible colors are:
 # black, blue, cyan, green, magenta, red, white, yellow
-playersDict = {"Andy":["red",1],"Betty":["blue",1],"Charlie":["green",2],"Dani":["yellow",2],"Envy":["magenta",1],"Fairy":["cyan",2]}
+playerNames = 'Andy Betty Charlie Dani Envy Fairy'.split()
+colors      = 'red blue green yellow magenta cyan'.split()
+teams       = [int(team) for team in '1 1 2 2 1 2'.split()]
+playerList  = [player.Player(*attrs,None) for attrs in list(zip(playerNames, colors, teams))]
+# playersDict = {"Andy":["red",1],"Betty":["blue",1],"Charlie":["green",2],"Dani":["yellow",2],"Envy":["magenta",1],"Fairy":["cyan",2]}
 
-game1 = game.game(playersDict)
-# location1 = location.location("play", 0, "white", False)
-# marble1 = marble.marble("play", 0, "white", False)
-# player1 = player.player("play", 0, "white", False)
-# section1 = section.section("play", 0, "white", False)
-# team1 = team.team("play", 0, "white", False)
+game1 = game.Game(playerList)

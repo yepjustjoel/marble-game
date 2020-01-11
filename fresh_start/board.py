@@ -1,55 +1,83 @@
 import player
-import marble
-import card
+import deck
+import collections
+from recordclass import recordclass
 
 from colorama import Fore
 from colorama import Style
 
+Location = collections.namedtuple('Location', 'marbOwner marbIdx')
+
 # Board Class
-class board:
+# Needs to do 3 things:
+#  - Be a record of current and past states of the gameboard
+#  - Be able to display itself
+#  - Take a card, player, and marble ID either play the card or reject it as an invalid play
+class Board:
 
     # Init
     def __init__(self, playerList):
         # Prepare the game board
-        self.board = {"PLAY":{},"BASE":{},"HOME":{}}
-        self.playerOrder = []
-        playDict = {}
-        baseDict = {}
-        homeDict = {}
-        for eachPlayer in playerList:
-            name = eachPlayer.getName()
-            self.playerOrder.append(name)
-            color = eachPlayer.getColor()
-            emptyChar = '\u25cb'
-            emptyColorChar = self.getDispChar(color, emptyChar)
-            fullChar = '\u25cf'
-            fullColorChar = self.getDispChar(color, fullChar)
-            baseDict[name] = []
-            homeDict[name] = []
-            playDict[name] = []
-            for i in range(4):
-                baseDict[name].append({"name":name,"ID":i,"dispChar":fullColorChar,"defaultDispChar":emptyColorChar})
-                homeDict[name].append({"name":0,"ID":0,"dispChar":0,"defaultDispChar":emptyColorChar})
-            for i in range(18):
-                playChar = emptyChar if i else emptyColorChar
-                playDict[name].append({"name":0,"ID":0,"dispChar":0,"defaultDispChar":playChar})
-        self.board["PLAY"] = playDict
-        self.board["BASE"] = baseDict
-        self.board["HOME"] = homeDict
+        self.playerList = playerList
+        self.playLocations = [Location(None,None) for player in playerList for i in range(18)]
+        self.baseLocations = {player.name : [Location(player.name,i) for i in range(4)] for player in playerList}
+        self.homeLocations = {player.name : [Location(None,None) for i in range(4)] for player in playerList}
+        self.wallLocations = [Location(player if not i else None,None) for player in playerList for i in range[18]]
 
-    def getDispChar(self,color, char):
-        switcher = {
-            'black' : f'{Fore.BLACK}{char}{Style.RESET_ALL}',
-            'blue' : f'{Fore.BLUE}{char}{Style.RESET_ALL}',
-            'cyan' : f'{Fore.CYAN}{char}{Style.RESET_ALL}',
-            'green' : f'{Fore.GREEN}{char}{Style.RESET_ALL}',
-            'magenta' : f'{Fore.MAGENTA}{char}{Style.RESET_ALL}',
-            'red' : f'{Fore.RED}{char}{Style.RESET_ALL}',
-            'white' : f'{Fore.WHITE}{char}{Style.RESET_ALL}',
-            'yellow' : f'{Fore.YELLOW}{char}{Style.RESET_ALL}'
-        }
-        return switcher.get(color,f'{char}')
+    # Given a player, card, and location - either move a marble or return false
+    def moveMarb(self, card, location, basic=True, location2=None):
+        # Prepare an individualized game board from the perspective of
+        # the current player to make math easier
+        playerIdx = self.playLocations.index(location.marbOwner)
+        myBoard = self.playLocations[playerIdx:] + self.playLocations[0:playerIdx] + self.homeLocations[location.marbOwner]
+        # Note here that myWalls includes marbles that are at home, as the same rules apply to those marbles
+        myWalls = self.wallLocations[playerIdx:] + self.wallLocations[0:playerIdx] + self.homeLocations[location.marbOwner]
+        # If it's a "basic" movement, calculate the new position and evaluate
+        # whether or not it can be played
+        if basic:
+            orderedRanks = ['KA'] + [str(n) for n in range(2,11)] + list('Q')
+            orderedMoveVals = [-1,1] + [n for n in range(2,11)] + [12]
+            moveValDict = dict(zip(orderedRanks,orderedMoveVals))
+            moveValDict['4'] = -4 # replace 4 with -4
+            # If the requested marble is not currently on the player's board, return false
+            try:
+                startIdx = myBoard.index(location)
+            except ValueError:
+                return False
+            # The marble is on the board, calculate end index and see if there
+            # are any problems moving the marble there
+            endIdx = startIdx + moveValDict[card.rank]
+            endIdx = endIdx - 4 if endIdx<0 else endIdx
+            # Test if out of range
+            if endIdx >= len(myBoard):
+                return false
+            # Test if there's a wall in between
+            # Range should not include current marb location (startIdx), but
+            # must include final marb location (thus endIdx+1)
+            for i in range(startIdx+1,endIdx+1):
+                if myBoard[i].marbOwner == myWalls[i].marbOwner:
+                    return false
+            endLocation = myBoard[endIdx]
+            elif myBoard[endIdx]
+            try:
+                myBoard[endIdx] = myBoard[startIdx]
+            if location not in myBoard:
+                return false
 
+        #  if card.rank in 'KA':
+        #      # Primary usage: bring into play
+        #      # Secondary usage: move backwards or forwards
+        #  elif card.rank in '23568910Q':
+        #      # Primary usage: moving a marble by a value
+        #  elif card.rank in '7':
+        #      # Primary usage: moving a marble by 7
+        #      # Secondary usage: moving two marbles in a way that adds to 7
+        #  elif card.rank in 'J':
+        #      # Primary usage: swapping locations with a marble that's not a wall
+        #      # Need to know which marble it will be switching with
+        #  elif card.rank in '4':
+        #      # Primary usage: moving a marble back by 4
+        #  return true
     # Board Display Methods
     def printBoard(self):
         for type,player in self.board.items():
@@ -118,6 +146,24 @@ class board:
             self.moveMarbByValue(name,id,-4)
         elif card in ["A","K"]:
             self.bringIntoPlay(name)
+
+        #  emptyChar = '\u25cb'
+        #  emptyColorChar = self.getDispChar(color, emptyChar)
+        #  fullChar = '\u25cf'
+        #  fullColorChar = self.getDispChar(color, fullChar)
+
+    def getDispChar(self,color, char):
+        switcher = {
+            'black' : f'{Fore.BLACK}{char}{Style.RESET_ALL}',
+            'blue' : f'{Fore.BLUE}{char}{Style.RESET_ALL}',
+            'cyan' : f'{Fore.CYAN}{char}{Style.RESET_ALL}',
+            'green' : f'{Fore.GREEN}{char}{Style.RESET_ALL}',
+            'magenta' : f'{Fore.MAGENTA}{char}{Style.RESET_ALL}',
+            'red' : f'{Fore.RED}{char}{Style.RESET_ALL}',
+            'white' : f'{Fore.WHITE}{char}{Style.RESET_ALL}',
+            'yellow' : f'{Fore.YELLOW}{char}{Style.RESET_ALL}'
+        }
+        return switcher.get(color,f'{char}')
 
 # To play a card:
 #  - 

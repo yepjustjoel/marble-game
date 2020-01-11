@@ -1,34 +1,24 @@
 import player
 import deck
 import board
+import random
 
 # Game Class
-class game:
+class Game:
 
     # Init
-    def __init__(self, playersDict):
-        self.playerList = []
+    def __init__(self, playerList):
+        # Take player list input and order it so team members are spaced every-other
+        sortedPlayers = sorted(playerList, key=lambda player: player.team) # Sort by team e.g. 1,1,1,2,2,2
+        numPlayers = len(playerList)
+        everyOtherSlices = [slice(i,None,numPlayers//2) for i in range(numPlayers//2)] # Each slice has a player from both teams
+        self.playerList = [player for pairSlice in everyOtherSlices
+                                  for player in sortedPlayers[pairSlice]] # Combine all slices to make ordered list
         self.turn = 0
-        self.deck = deck.deck()
-        # Set up the players in an ordered list every other by team
-        unSortedPlayerList = []
-        for name,attr in playersDict.items():
-            unSortedPlayerList.append(player.player(name,attr[0],attr[1]))
-        t1Idx=0;
-        t2Idx=1;
-        sortedPlayerList = []
-        for i in range(len(unSortedPlayerList)):
-            sortedPlayerList.append(None)
-        for aPlayer in unSortedPlayerList:
-            if (aPlayer.getTeam() == 1):
-                sortedPlayerList[t1Idx] = aPlayer
-                t1Idx += 2
-            elif (aPlayer.getTeam() == 2):
-                sortedPlayerList[t2Idx] = aPlayer
-                t2Idx += 2
-        self.playerList = sortedPlayerList
-        self.board = board.board(self.playerList)
-        self.board.printBoard()
+        self.deck = deck.Deck()
+        random.shuffle(self.deck)
+        self.board = board.Board(self.playerList)
+        # self.board.printBoard()
 
     # Setters
     def nextTurn(self):
