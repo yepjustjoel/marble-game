@@ -1,7 +1,6 @@
 import player
 import deck
 import collections
-from recordclass import recordclass
 
 from colorama import Fore
 from colorama import Style
@@ -22,20 +21,20 @@ class Board:
         self.playLocations = [Location(None,None) for player in playerList for i in range(18)]
         self.baseLocations = {player.name : [Location(player.name,i) for i in range(4)] for player in playerList}
         self.homeLocations = {player.name : [Location(None,None) for i in range(4)] for player in playerList}
-        self.wallLocations = [Location(player if not i else None,None) for player in playerList for i in range[18]]
+        self.wallLocations = [Location(player.name if not i else None,None) for player in playerList for i in range(18)]
 
     # Given a player, card, and location - either move a marble or return false
     def moveMarb(self, card, location, basic=True, location2=None):
         # Prepare an individualized game board from the perspective of
         # the current player to make math easier
-        playerIdx = self.playLocations.index(location.marbOwner)
-        myBoard = self.playLocations[playerIdx:] + self.playLocations[0:playerIdx] + self.homeLocations[location.marbOwner]
+        playerIdx = self.wallLocations.index(Location(location.marbOwner,None))
+        myBoard = self.playLocations[playerIdx:] + self.playLocations[:playerIdx] + self.homeLocations[location.marbOwner]
         # Note here that myWalls includes marbles that are at home, as the same rules apply to those marbles
-        myWalls = self.wallLocations[playerIdx:] + self.wallLocations[0:playerIdx] + self.homeLocations[location.marbOwner]
+        myWalls = self.wallLocations[playerIdx:] + self.wallLocations[:playerIdx] + self.homeLocations[location.marbOwner]
         # If it's a "basic" movement, calculate the new position and evaluate
         # whether or not it can be played
         if basic:
-            orderedRanks = ['KA'] + [str(n) for n in range(2,11)] + list('Q')
+            orderedRanks = list('KA')+ [str(n) for n in range(2,11)] + list('Q')
             orderedMoveVals = [-1,1] + [n for n in range(2,11)] + [12]
             moveValDict = dict(zip(orderedRanks,orderedMoveVals))
             moveValDict['4'] = -4 # replace 4 with -4
@@ -43,114 +42,102 @@ class Board:
             try:
                 startIdx = myBoard.index(location)
             except ValueError:
+                #  raise NotInPlay('Requested marble is not in play')
                 return False
             # The marble is on the board, calculate end index and see if there
             # are any problems moving the marble there
             endIdx = startIdx + moveValDict[card.rank]
-            endIdx = endIdx - 4 if endIdx<0 else endIdx
+            print(moveValDict)
+            print(endIdx)
             # Test if out of range
             if endIdx >= len(myBoard):
-                return false
-            # Test if there's a wall in between
-            # Range should not include current marb location (startIdx), but
-            # must include final marb location (thus endIdx+1)
-            for i in range(startIdx+1,endIdx+1):
-                if myBoard[i].marbOwner == myWalls[i].marbOwner:
-                    return false
+                #  raise OffBoard('Not enough spaces left in the board to play this marble')
+                return False
+            # Do some special stuff if moving backwards
+            if endIdx < startIdx:
+                if (startIdx >= len(myBoard)-4): # You can't go backwards from home
+                    #  raise NoBackwd('Cannot go backwards from home')
+                    return False
+                myBoard = myBoard[:-4] # Remove the home locations from the board
+            """ Test if there's a wall in between
+            Range should not include current marb location (startIdx), but
+            must include final marb location (thus endIdx+1), also needs to 
+            work for going backwards, hence min/max """
+            rangeMin = min(startIdx+1,endIdx)
+            rangeMax = max(endIdx+1,startIdx)
+            for i in range(rangeMin,rangeMax):
+                if myBoard[i].marbOwner and (myBoard[i].marbOwner == myWalls[i].marbOwner):
+                    # raise WallOrHome('Wall in the way, or cannot jump over marbles in home')
+                    return False
+            # Actually move the marbles, sending home if necessary
             endLocation = myBoard[endIdx]
-            elif myBoard[endIdx]
-            try:
-                myBoard[endIdx] = myBoard[startIdx]
-            if location not in myBoard:
-                return false
+            if (endLocation.marbOwner):
+                homeLocations[endLocation.marbOwner][endLocation.marbIdx] = endLocation
+                myBoard[endIdx] = Location(None,None)
+            myBoard[endIdx],myBoard[startIdx] = myBoard[startIdx],myBoard[endIdx]
+
+            if len(myBoard) > len(self.playLocations):
+                self.homeLocations[location.marbOwner]= myBoard[-4:]
+            self.playLocations = myBoard[-playerIdx:len(self.playLocations)] + myBoard[:-playerIdx]
+            return True
+        else :
+            if card.rank in 'KA':
+                # If the marble is in the base locations, bring it into play
+                # and remove any marble that was there
+                try:
+                    locIdx = self.baseLocations[location.marbOwner].index(location)
+                except ValueError:
+                    return False
+                self.baseLocations[location.marbOwner][locIdx] = Location(None, None)
+                playerIdx = self.wallLocations.index(Location(location.marbOwner,None))
+                sendToBaseLoc = self.playLocations[playerIdx]
+                if (sendToBaseLoc.marbOwner):
+                    self.homeLocations[sendToBaseLoc.marbOwner][sendToBaseLoc.marbIdx] = sendToBaseLoc
+                self.playLocations[playerIdx] = location
+                return True
+            elif card.rank in '7':
+                return False
+            elif card.rank in 'J':
+                return False
+            else:
+                return False
 
         #  if card.rank in 'KA':
-        #      # Primary usage: bring into play
-        #      # Secondary usage: move backwards or forwards
-        #  elif card.rank in '23568910Q':
-        #      # Primary usage: moving a marble by a value
+        #      # Secondary usage: bring into play
         #  elif card.rank in '7':
-        #      # Primary usage: moving a marble by 7
         #      # Secondary usage: moving two marbles in a way that adds to 7
         #  elif card.rank in 'J':
         #      # Primary usage: swapping locations with a marble that's not a wall
         #      # Need to know which marble it will be switching with
-        #  elif card.rank in '4':
-        #      # Primary usage: moving a marble back by 4
-        #  return true
     # Board Display Methods
     def printBoard(self):
-        for type,player in self.board.items():
-            print(type+":")
-            for name,locArray in player.items():
-                dispString = name+": "
-                for loc in locArray:
-                    dispString += loc["dispChar"] if loc["name"] else loc["defaultDispChar"]
-                print (dispString)
-
-    # Marble Movers
-    def moveMarb(self,type1,name1,idx1,type2,name2,idx2):
-        self.board[type2][name2][idx2]["name"] = self.board[type1][name1][idx1]["name"]
-        self.board[type2][name2][idx2]["ID"] = self.board[type1][name1][idx1]["ID"]
-        self.board[type2][name2][idx2]["dispChar"] = self.board[type1][name1][idx1]["dispChar"]
-        self.board[type1][name1][idx1]["name"] = 0
-        self.board[type1][name1][idx1]["ID"] = 0
-        self.board[type1][name1][idx1]["dispChar"] = 0
-
-    # Get Marb Location
-    def getMarb(self,name,id):
-        for type,player in self.board.items():
-            for sectionName,locArray in player.items():
-                i = 0
-                for loc in locArray:
-                    if (loc["name"]==name) & (loc["ID"]==id):
-                        return [type,sectionName,i]
-                    i+=1
-
-    # Playing a card
-    def sendToBase(self,sectionName,idx):
-        marbOwner = self.board["PLAY"][sectionName][idx]["name"]
-        marbID = self.board["PLAY"][sectionName][idx]["ID"]
-        if (marbOwner):
-            self.moveMarb("PLAY",sectionName,idx,"BASE",marbOwner,marbID)
-    def bringIntoPlay(self,name):
-        self.sendToBase(name,0)
-        for i in range(4):
-            locInfo = self.board["BASE"][name][i]
-            if locInfo["name"]:
-                break
-        self.moveMarb("BASE",name,i,"PLAY",name,0)
-    def calcNewLoc(self,name,id,value):
-        [type,sectionName,idx] = self.getMarb(name,id)
-        endIdx = idx+value
-        if (endIdx>17)|(endIdx<0):
-            sectionsAdded = endIdx//18
-            endIdx = endIdx%18
-            sectionIdx = self.playerOrder.index(sectionName)
-            sectionIdx = (sectionIdx+sectionsAdded)%len(self.playerOrder)
-            sectionName = self.playerOrder[sectionIdx]
-            if (sectionName == name)&(value>0):
-                type = "HOME"
-        return [type,sectionName,endIdx]
-    def moveMarbByValue(self,name,id,value):
-        [type,sectionName,idx] = self.getMarb(name,id)
-        [endType,endSectionName,endIdx] = self.calcNewLoc(name,id,value)
-        self.sendToBase(endSectionName,endIdx)
-        self.moveMarb(type,sectionName,idx,endType,endSectionName,endIdx)
-    def playCard(self,name,id,card):
-        if card in ["2","3","5","6","8","9","10"]:
-            self.moveMarbByValue(name,id,int(card))
-        elif card in ["Q"]:
-            self.moveMarbByValue(name,id,12)
-        elif card in ["4"]:
-            self.moveMarbByValue(name,id,-4)
-        elif card in ["A","K"]:
-            self.bringIntoPlay(name)
-
-        #  emptyChar = '\u25cb'
-        #  emptyColorChar = self.getDispChar(color, emptyChar)
-        #  fullChar = '\u25cf'
-        #  fullColorChar = self.getDispChar(color, fullChar)
+        emptyChar = '\u25cb'
+        fullChar  = '\u25cf'
+        # Print base locations
+        for player in self.playerList:
+            dispString = player.name+": "
+            emptyDispChar = self.getDispChar(player.color, emptyChar)
+            fullDispChar  = self.getDispChar(player.color, fullChar)
+            for loc in self.baseLocations[player.name]:
+                dispString += fullDispChar if loc.marbOwner else emptyDispChar
+            print(dispString)
+        # Print the play board
+        charList=[emptyChar for _ in self.playLocations]
+        for player in self.playerList:
+            for locIdx in range(len(self.playLocations)):
+                if self.wallLocations[locIdx].marbOwner == player.name:
+                    charList[locIdx] = self.getDispChar(player.color, emptyChar)
+                if self.playLocations[locIdx].marbOwner == player.name:
+                    charList[locIdx] = self.getDispChar(player.color, fullChar)
+        print("".join(charList))
+        # Print home locations
+        for player in self.playerList:
+            dispString = player.name+": "
+            emptyDispChar = self.getDispChar(player.color, emptyChar)
+            fullDispChar  = self.getDispChar(player.color, fullChar)
+            for loc in self.homeLocations[player.name]:
+                dispString += fullDispChar if loc.marbOwner else emptyDispChar
+            print(dispString)
 
     def getDispChar(self,color, char):
         switcher = {
@@ -164,6 +151,3 @@ class Board:
             'yellow' : f'{Fore.YELLOW}{char}{Style.RESET_ALL}'
         }
         return switcher.get(color,f'{char}')
-
-# To play a card:
-#  - 
